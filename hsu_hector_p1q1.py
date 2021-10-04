@@ -12,7 +12,7 @@ print("Good luck!")
 
 # Create a list of questions
 questions = [
-    ["What is the colour of the [bold italic red]sun[/bold italic red]? ", "yellow"]
+    ["How old am [bold italic green]I[/bold italic green]? ", "16"]
 ]
 
 # For each question, print it out and ask the user to answer
@@ -28,4 +28,3 @@ for question in questions:
         print("dame u got it right! good job!")
     else:
         print("Yikes u fail bye bye!")
-#dsl
