@@ -28,4 +28,3 @@ for question in questions:
         print("dame u got it right! good job!")
     else:
         print("Yikes u fail bye bye!")
-#change
