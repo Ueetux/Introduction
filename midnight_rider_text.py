@@ -13,6 +13,12 @@ ONE GOAL: SURVIVAL... AND THE CAR REACH THE SAFEHOUSE BEFORE THE VAN GON GETCHU.
 
 CHOICES = """
     --- Your Choices ---
+    D. Stop to refuel
+    E. Check current Status 
     Q. Quit the game.
     ---
+"""
+
+REFUEL = """-------You filled the fuel tank.
+-------The agents got closer...
 """
