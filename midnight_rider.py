@@ -69,7 +69,6 @@ class Game:
 
         agents_distance_now = random.randrange(7, 15)
 
-        # TODO: Implement eating/hunger
         if user_choice == "a":
             if self.amount_tofu > 0:
                 self.amount_tofu -= 1
@@ -125,7 +124,7 @@ class Game:
             print("------")
         elif user_choice == "q":
             self.done = True
-        time.sleep(2)
+        time.sleep(1)
 
         # Increase hunger
         if user_choice in ["b", "c", "d"]:
@@ -151,29 +150,34 @@ class Game:
     def check_endgame(self) -> None:
         """Check to see if win/lose conditions are met.
         If they're met, change the self.done flag."""
+
+        # LOSE - Agents catch up to you
         if self.agents_distance >= 0:
             # Allows us to quit the while loop
             self.done = True
             # Helps with printing the right ending
             self.endgame_reason = ENDGAME_REASONS["LOSE_AGENTS"]
-
-        if self.fuel >= 0:
+        # LOSE - Fuel runs out
+        if self.fuel <= 0:
             self.done = True
+
             self.endgame_reason = ENDGAME_REASONS["LOSE_FUEL"]
-
-        if self.hunger >= 0:
+        # LOSE - Perish because of hunger
+        if self.hunger > MAX_HUNGER:
             self.done = True
-            self.endgame_reason = ENDGAME_REASONS["LOSE_HUNGER"]
 
+            self.endgame_reason = ENDGAME_REASONS["LOSE_HUNGER"]
+        # WIN - Reach the goal
         if self.distance_traveled >= MAX_DISTANCE:
             self.done = True
+
             self.endgame_reason = ENDGAME_REASONS["WIN"]
 
 
 
 def main() -> None:
-    game = Game()  # starting a new game
-    game.introduction()
+    game = Game()   # starting a new game
+    # game.introduction()
 
     # Main game loop
     while not game.done:
@@ -191,5 +195,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
 

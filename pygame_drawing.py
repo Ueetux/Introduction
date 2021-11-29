@@ -39,6 +39,7 @@ def main() -> None:
         # Change the environment
         # Draw the environment
         screen.fill(WHITE)
+        pygame.draw.rect(screen, RED, [])
         # Update the screen
         pygame.display.flip
         # Tick the clock
