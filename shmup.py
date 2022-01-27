@@ -1,6 +1,4 @@
-# Shoot em up
-# Hector Hsu
-# December 10 2021
+# shmup.py
 
 import random
 import time
@@ -24,6 +22,7 @@ SCREEN_HEIGHT = 600
 SCREEN_SIZE   = (SCREEN_WIDTH, SCREEN_HEIGHT)
 WINDOW_TITLE  = "Collecting Blocks"
 
+BOTTOM_SCREEN_BUFFER = 75
 
 class Player(pygame.sprite.Sprite):
     """Describes a player object
@@ -68,7 +67,8 @@ class Enemy(pygame.sprite.Sprite):
 
         self.image = pygame.image.load("./images/spaceinvaders.png")
         # Resize the image (scale)
-        self.image = pygame.transform.scale(self.image, (56, 40))
+        self.image = pygame.transform.scale(self.image, (90, 56))
+        self.image.set_colorkey((255, 255, 255))
 
         self.rect = self.image.get_rect()
         # Define the initial location
@@ -102,30 +102,23 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.bottom = SCREEN_HEIGHT
             self.y_vel = -self.y_vel
 
+
 class Bullet(pygame.sprite.Sprite):
-    """Bullet
-    Attributes:
-        image: visual representation
-        rect: mathematical representation (hit box)
-        vel_y: y velocity in px/sec
-    """
     def __init__(self, coords: tuple):
-        """
-        Arguments:
-            coords: tuple of (x,y) to represent initial location
-        """
         super().__init__()
 
         self.image = pygame.Surface((5, 10))
         self.image.fill(BLACK)
         self.rect = self.image.get_rect()
 
-        # Set the middle of the bullet to be at coords
+        # Set the middle of the bullet to be at (x, y)
         self.rect.center = coords
 
         self.vel_y = 3
 
-    def update(self):
+
+    def update(self) -> None:
+        """Update location"""
         self.rect.y -= self.vel_y
 
 
@@ -138,17 +131,17 @@ def main() -> None:
     # Create some local variables that describe the environment
     done = False
     clock = pygame.time.Clock()
-    num_enemies = 15
+    num_blocks = 100
+    num_enemies = 10
     score = 0
     time_start = time.time()
     time_invincible = 5             # seconds
     game_state = "running"
     endgame_cooldown = 5            # seconds
     time_ended = 0.0
-
-    # Check for high score
-    with open("./data/shootemup_highscore.txt") as f:
-        high_score = int(f.readline().strip())
+    time_last_enemy_killed = 0
+    enemy_creation_cooldown = 10     # seconds
+    enemy_wave_num = 1
 
     endgame_messages = {
         "win": "Congratulations, you won!",
@@ -163,6 +156,15 @@ def main() -> None:
     all_sprites = pygame.sprite.Group()
     enemy_sprites = pygame.sprite.Group()
     bullet_sprites = pygame.sprite.Group()
+
+    # Create enemy sprites
+    for i in range(num_enemies):
+        # Create an enemy
+        enemy = Enemy()
+
+        # Add it to the sprites list (enemy_sprites and all_sprites)
+        enemy_sprites.add(enemy)
+        all_sprites.add(enemy)
 
     # Create the Player block
     player = Player()
@@ -179,17 +181,30 @@ def main() -> None:
             if event.type == pygame.QUIT:
                 done = True
             if event.type == pygame.MOUSEBUTTONUP:
-                if len(bullet_sprites) < 3 and time.time() - time_start > time_invincible:
+                if len(bullet_sprites) < 3 and time.time() - time_start >= time_invincible:
+                    # Create a new bullet
                     bullet = Bullet(player.rect.midtop)
-
                     bullet_sprites.add(bullet)
-                    all_sprites.add(bullet)
+                    all_sprites.add(bullet_sprites)
 
-        # Listen for the spacebar on keyboard
-        if pygame.key.get_pressed()[pygame.K_SPACE]:
-            # Do something for the keyboard
-            pass
+        # End-game listener
+        if score == num_blocks:
+            # Indicate to draw a message
+            game_state = "won"
 
+            # SET THE TIME THAT THE GAME WAS WON
+            if time_ended == 0:
+                time_ended = time.time()
+
+            # Set parameters to keep the screen alive
+            # Wait 5 seconds to kill the screen
+            if time.time() - time_ended >= endgame_cooldown:
+                done = True
+
+        # Kill bullets outside of the screen
+        for bullet in bullet_sprites:
+            if bullet.rect.y <= 0:
+                bullet.kill()
 
         # TODO: LOSE CONDITION - Player's hp goes below 0
         if player.hp_remaining() <= 0:
@@ -199,20 +214,10 @@ def main() -> None:
         # Process player movement based on mouse pos
         mouse_pos = pygame.mouse.get_pos()
         player.rect.x = mouse_pos[0] - player.rect.width / 2
-        player.rect.y = mouse_pos[1] - player.rect.height / 2
-
-        # Check numbers of enemies currently on the screen
-        if len(enemy_sprites) < 1:
-            # Create enemy sprites
-            for i in range(num_enemies):
-                # Create an enemy
-                enemy = Enemy()
-
-                # Add it to the sprites list (enemy_sprites and all_sprites)
-                enemy_sprites.add(enemy)
-                all_sprites.add(enemy)
-
-            num_enemies += 5        # scale the degree of difficulty
+        if mouse_pos[1] <= SCREEN_HEIGHT - BOTTOM_SCREEN_BUFFER:
+            player.rect.y = SCREEN_HEIGHT - BOTTOM_SCREEN_BUFFER - player.rect.height / 2
+        else:
+            player.rect.y = mouse_pos[1] - player.rect.height / 2
 
         # Update the location of all sprites
         all_sprites.update()
@@ -225,22 +230,21 @@ def main() -> None:
             for enemy in enemies_collided:
                 player.hp -= 1
 
-        # Check bullet collisions with enemies
-        # Kill the bullets when they've left the screen
+        # Bullet Collision with Enemy
         for bullet in bullet_sprites:
-            enemies_bullet_collided = pygame.sprite.spritecollide(
-                bullet,
-                enemy_sprites,
-                True
-            )
+            enemies_hit = pygame.sprite.spritecollide(bullet, enemy_sprites, True)
 
-            # If the bullet has struck some enemy
-            if len(enemies_bullet_collided) > 0:
-                bullet.kill()
+            if len(enemies_hit) > 0:
                 score += 1
-
-            if bullet.rect.y < 0:
                 bullet.kill()
+                time_last_enemy_killed = time.time()
+
+        # Create a new enemy if enemy cooldown valid
+        if time_last_enemy_killed != 0 and time.time() - time_last_enemy_killed >= enemy_creation_cooldown:
+            for i in range(enemy_wave_num):
+                enemy = Enemy()
+                enemy_sprites.add(enemy)
+                all_sprites.add(enemy)
 
         # ----------- DRAW THE ENVIRONMENT
         screen.fill(BGCOLOUR)      # fill with bgcolor
@@ -249,14 +253,9 @@ def main() -> None:
         all_sprites.draw(screen)
 
         # Draw the score on the screen
-        # Draw the high score
         screen.blit(
             font.render(f"Score: {score}", True, BLACK),
             (5, 5)
-        )
-        screen.blit(
-            font.render(f"High Score: {high_score}", True, BLACK),
-            (5, 28)
         )
 
         # Draw a health bar
@@ -278,15 +277,6 @@ def main() -> None:
 
         # ----------- CLOCK TICK
         clock.tick(75)
-
-    # Clean-up
-
-    # Update the high score if the current score is the highest
-    with open("./data/shootemup_highscore.txt", "w") as f:
-        if score > high_score:
-            f.write(str(score))
-        else:
-            f.write(str(high_score))
 
 
 if __name__ == "__main__":

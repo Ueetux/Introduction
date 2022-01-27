@@ -6,21 +6,21 @@ import pygame
 
 pygame.init()
 
-WHITE =     (255, 255, 255)
-BLACK =     (  0,   0,   0)
-RED   =     (255,   0,   0)
-GREEN =     (  0, 255,   0)
-BLUE  =     (  0,   0, 255)
+WHITE = (255, 255, 255)
+BLACK = (0,   0,   0)
+RED = (255,   0,   0)
+GREEN = (0, 255,   0)
+BLUE = (0,   0, 255)
 ETON_BLUE = (135, 187, 162)
-RAD_RED =   (255,  56, 100)
+RAD_RED = (255,  56, 100)
 BLK_CHOCOLATE = (25, 17, 2)
 
-BGCOLOUR =  WHITE
+BGCOLOUR = WHITE
 
-SCREEN_WIDTH  = 800
+SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
-SCREEN_SIZE   = (SCREEN_WIDTH, SCREEN_HEIGHT)
-WINDOW_TITLE  = "Collecing Blocks"
+SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
+WINDOW_TITLE = "Collecing Blocks"
 
 
 class Player(pygame.sprite.Sprite):
